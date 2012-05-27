@@ -282,6 +282,7 @@ int main(int argc, char** argv)
     }
     gettimeofday(&tcpu2,NULL)
 
+    float timecpu=((float)TIME_DIFF(tcpu1,tcpu2)) / 1000;
 
 
 
@@ -420,9 +421,9 @@ int main(int argc, char** argv)
             gettimeofday(&tv2,NULL);
             float time2=((float)TIME_DIFF(tv1,tv2)) / 1000;
 
-            printf("%f\t%f ms (%fGo/s)\t%f ms (%fGo/s)\n", time2/time1,
+            printf("%f\t%f ms (%fGo/s)\t%f ms (%fGo/s)\n", timecpu/time1,
                    time1, numIterations * 3*mem_size / time1 / 1000000,
-                   time2, numIterations * 3*mem_size / time2 / 1000000);
+                   timecpu, numIterations * 3*mem_size / timecpu / 1000000);
 
             // Validate our results
             //
