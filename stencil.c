@@ -343,14 +343,14 @@ int main(int argc, char** argv)
                 check(err, "Failed to execute kernel!\n");
 
                 // CPU part
-                //pthread_create(&thread, NULL, calcul_cpu, (void*) &container);
-                //pthread_join(thread ,NULL);
+                pthread_create(&thread, NULL, calcul_cpu, (void*) &container);
+                pthread_join(thread ,NULL);
                 /*
                 container.in  = h_idata + LINESIZE * (YDIM_GPU) + OFFSET;
                 container.out = h_odata + LINESIZE * (YDIM_GPU) + OFFSET;
                 container.ydim_cpu = YDIM_CPU;
                 */
-                stencil(container.out, container.in, container.ydim_cpu);
+                //stencil(container.out, container.in, container.ydim_cpu);
 
                 // Wait for the command commands to get serviced before reading back results
                 //
@@ -381,7 +381,7 @@ int main(int argc, char** argv)
             gettimeofday(&tv2, NULL);
 
             tmp_switch = d_odata;
-	    d_odata = d_idata;
+            d_odata = d_idata;
             d_idata = tmp_switch;
 
 
@@ -404,11 +404,6 @@ int main(int argc, char** argv)
 
             float * h_fdata = h_odata;
 
-            /*
-            if(numIterations%2)
-                h_fdata = h_odata;
-            else
-                h_fdata = h_idata; */
             for(unsigned int i=0; i<TOTALSIZE; i++)
             {
                 if((reference[i]-h_fdata[i])/reference[i] > 1e-6)
