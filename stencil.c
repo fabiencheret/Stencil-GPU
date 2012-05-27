@@ -280,7 +280,7 @@ int main(int argc, char** argv)
         reference   = reference_i;
         reference_i = tmp_switch;
     }
-    gettimeofday(&tcpu2,NULL)
+    gettimeofday(&tcpu2,NULL);
 
     float timecpu=((float)TIME_DIFF(tcpu1,tcpu2)) / 1000;
 
