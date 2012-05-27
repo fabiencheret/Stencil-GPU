@@ -73,7 +73,8 @@ load(const char *filename)
 /* Version CPU multicoeur */
 void stencil_multi(float* B, const float* A, int ydim)
 {
-#pragma omp parallel for
+  omp_set_nested(1);
+#pragma omp parallel for 
     for(int y=0; y<ydim; y++)
 	#pragma omp parallel for
         for(int x=0; x<XDIM; x++)
@@ -229,7 +230,7 @@ int main(int argc, char** argv)
     /* Version cpu pour comparaison */
 
     void * tmp_switch;
-    int numIterations = 30;
+    int numIterations = 300;
 
     float* reference = (float*) malloc(mem_size);
     float* reference_i = (float*) malloc(mem_size);
