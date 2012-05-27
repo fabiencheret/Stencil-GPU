@@ -70,7 +70,7 @@ load(const char *filename)
 }
 
 
-/* Version CPU pour comparer le resultat */
+/* Version CPU multicoeur */
 void stencil_multi(float* B, const float* A, int ydim)
 {
 #pragma omp parallel for
@@ -82,6 +82,7 @@ void stencil_multi(float* B, const float* A, int ydim)
                           A[(y-1)*LINESIZE + x] + A[(y+1)*LINESIZE + x]);
 }
 
+/* Version CPU pour comparaison */
 void stencil(float* B, const float* A, int ydim)
 {
     for(int y=0; y<ydim; y++)
@@ -92,7 +93,7 @@ void stencil(float* B, const float* A, int ydim)
 }
 
 
-
+/* fonction appelée par le thread dès sa création */
 void* calcul_cpu(void* p)
 {
     struct double_matrice* container = (struct double_matrice*) p;
@@ -132,7 +133,7 @@ int main(int argc, char** argv)
     struct double_matrice container;
 
 
-    struct timeval tv1,tv2;
+    struct timeval tv1,tv2,tcpu1,tcpu2;
 
     // Filter args
     //
@@ -249,6 +250,7 @@ int main(int argc, char** argv)
 
 
     /* Version cpu pour comparaison */
+    gettimeofday(&tcpu1,NULL);
     void * tmp_switch;
     int numIterations = 30;
 
@@ -278,7 +280,7 @@ int main(int argc, char** argv)
         reference   = reference_i;
         reference_i = tmp_switch;
     }
-
+    gettimeofday(&tcpu2,NULL)
 
 
 
