@@ -73,8 +73,6 @@ load(const char *filename)
 /* Version CPU multicoeur */
 void stencil_multi(float* B, const float* A, int ydim)
 {
-  omp_set_nested(1);
-#pragma omp parallel for 
     for(int y=0; y<ydim; y++)
 	#pragma omp parallel for
         for(int x=0; x<XDIM; x++)
@@ -317,7 +315,7 @@ int main(int argc, char** argv)
             local[1] = 4;
 
 //	    float * tmp;
-//	    pthread_t thread;
+	    pthread_t thread;
 
             //TODO changer
             printf("nombre d'itération: %d\n",numIterations);
@@ -346,11 +344,7 @@ int main(int argc, char** argv)
                 // CPU part
                 pthread_create(&thread, NULL, calcul_cpu, (void*) &container);
                 pthread_join(thread ,NULL);
-                /*
-                container.in  = h_idata + LINESIZE * (YDIM_GPU) + OFFSET;
-                container.out = h_odata + LINESIZE * (YDIM_GPU) + OFFSET;
-                container.ydim_cpu = YDIM_CPU;
-                */
+
                 //stencil(container.out, container.in, container.ydim_cpu);
 
                 // Wait for the command commands to get serviced before reading back results
