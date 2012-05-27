@@ -317,7 +317,7 @@ int main(int argc, char** argv)
             local[1] = 4;
 
 //	    float * tmp;
-//	    pthread_t thread;
+	    pthread_t thread;
 
             //TODO changer
             printf("nombre d'itération: %d\n",numIterations);
