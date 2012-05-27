@@ -135,29 +135,6 @@ int main(int argc, char** argv)
 
     struct timeval tv1,tv2,tcpu1,tcpu2;
 
-    // Filter args
-    //
-    argv++;
-    while (argc > 1)
-    {
-        if(!strcmp(*argv, "--gpu-only"))
-        {
-            if(device_type != CL_DEVICE_TYPE_ALL)
-                error("--gpu-only and --cpu-only can not be specified at the same time\n");
-            device_type = CL_DEVICE_TYPE_GPU;
-        }
-        else if(!strcmp(*argv, "--cpu-only"))
-        {
-            if(device_type != CL_DEVICE_TYPE_ALL)
-                error("--gpu-only and --cpu-only can not be specified at the same time\n");
-            device_type = CL_DEVICE_TYPE_CPU;
-        }
-        else
-            break;
-        argc--;
-        argv++;
-    }
-
     // Allocation of input & output matrices
     //
     h_idata = malloc(mem_size);
@@ -250,10 +227,9 @@ int main(int argc, char** argv)
 
 
     /* Version cpu pour comparaison */
-    gettimeofday(&tcpu1,NULL);
+
     void * tmp_switch;
     int numIterations = 30;
-
 
     float* reference = (float*) malloc(mem_size);
     float* reference_i = (float*) malloc(mem_size);
@@ -263,7 +239,7 @@ int main(int argc, char** argv)
         reference_i[i] = h_idata[i];
     }
     float * cpu_switch_tmp;
-    gettimeofday(&tv1,NULL);
+    gettimeofday(&tcpu1,NULL);
 
     for(int i=0; i<numIterations; ++i)
     {
@@ -402,13 +378,14 @@ int main(int argc, char** argv)
                 container.in = tmp_switch;
 
             }
+            gettimeofday(&tv2, NULL);
 
             tmp_switch = d_odata;
 	    d_odata = d_idata;
             d_idata = tmp_switch;
 
 
-            gettimeofday(&tv2, NULL);
+
             float time1=((float)TIME_DIFF(tv1,tv2)) / 1000;
             // Read back the results from the device to verify the output
             //
@@ -416,10 +393,6 @@ int main(int argc, char** argv)
                                       mem_size_gpu - LINESIZE * sizeof(float), h_odata, 0, NULL, NULL );
             check(err, "Failed to read output matrix! %d\n", err);
 
-
-
-            gettimeofday(&tv2,NULL);
-            float time2=((float)TIME_DIFF(tv1,tv2)) / 1000;
 
             printf("%f\t%f ms (%fGo/s)\t%f ms (%fGo/s)\n", timecpu/time1,
                    time1, numIterations * 3*mem_size / time1 / 1000000,
@@ -463,7 +436,6 @@ int main(int argc, char** argv)
     free(h_idata);
     clReleaseMemObject(d_odata);
     clReleaseMemObject(d_idata);
-    //clReleaseMemObject(d_idata2);
     clReleaseProgram(program);
     clReleaseContext(context);
 
