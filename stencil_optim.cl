@@ -27,8 +27,8 @@ stencil(__global float *B,
         const int bx = (yloc & 2) ? cbx : cby;
         const int by = (yloc & 2) ? cby : cbx;
         //TODO trouver les bons indices...
-        tile[cbx][cby] = A[(y*4+cby)*line_size + cbx];
-        tile[bx][by] = A[(y*4+by)*line_size + bx];
+        tile[cbx][cby] = A[(y*4+cby)*line_size + x];
+        tile[bx][by] = A[(y*4+by)*line_size + x];
     }
 
     barrier(CLK_LOCAL_MEM_FENCE);
