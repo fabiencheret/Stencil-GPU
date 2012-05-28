@@ -124,6 +124,14 @@ void* calcul_cpu(void* p)
 int main(int argc, char** argv)
 {
 
+    int numIterations = NB_ITER;
+
+    if(argc > 0){
+            numIterations = atoi(argv[1]);
+    }
+
+
+
     cl_platform_id	pf[3];
     cl_uint nb_platforms = 0;
     cl_uint p = 0;
@@ -184,8 +192,8 @@ int main(int argc, char** argv)
     //
     for (unsigned int _p=0; _p<nb_platforms; _p++)
     {
-        cl_uint num;
-        int platform_valid = 1;
+//        cl_uint num;
+//        int platform_valid = 1;
         char name[1024], vendor[1024];
 
         err = clGetPlatformInfo(pf[_p], CL_PLATFORM_NAME, 1024, name, NULL);
@@ -247,7 +255,7 @@ int main(int argc, char** argv)
     /* Version cpu pour comparaison */
 
     void * tmp_switch;
-    int numIterations = NB_ITER;
+
 
     float* reference = (float*) malloc(mem_size);
     float* reference_i = (float*) malloc(mem_size);
@@ -256,7 +264,7 @@ int main(int argc, char** argv)
         reference[i]   = 0.0;
         reference_i[i] = h_idata[i];
     }
-    float * cpu_switch_tmp;
+
     gettimeofday(&tcpu1,NULL);
 
     for(int i=0; i<numIterations; ++i)
