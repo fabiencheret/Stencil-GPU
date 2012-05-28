@@ -32,14 +32,19 @@
 //struct timeval tcpu,tgpu;
 //unsigned int ydim_gpu = YDIM_GPU;
 //
+struct timeval temps1, temps2;
+int cpulong=0;
+int gpulong=0;
+
+
 void equilibrer_charges()
 {
     float diff = ((float)TIME_DIFF(temps1,temps2)) / 1000;
     /* si diff > 0 alors temps2 > temps1 */
     if(diff > 0)
-        printf("GPU plus long\n");
+      ++gpulong;
     else
-        printf("CPU plus long\n");
+      ++cpulong;
 }
 
 
@@ -106,7 +111,6 @@ void stencil(float* B, const float* A, int ydim)
                                        A[(y-1)*LINESIZE + x] + A[(y+1)*LINESIZE + x]);
 }
 
-struct timeval temps1, temps2;
 
 
 /* fonction appelée par le thread dès sa création */
@@ -406,6 +410,10 @@ int main(int argc, char** argv)
                 equilibrer_charges();
 
             }
+
+	    printf("le CPU a été plus long %d fois\n",cpulong);
+	    printf("le GPU a été plus long %d fois\n",gpulong);
+	    
             gettimeofday(&tv2, NULL);
 
             tmp_switch = d_odata;
