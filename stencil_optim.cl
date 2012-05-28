@@ -26,14 +26,20 @@ stencil(__global float *B,
         const int cby = (yloc & 1) ? -1 : 16;
         const int bx = (yloc & 2) ? cbx : cby;
         const int by = (yloc & 2) ? cby : cbx;
-	//TODO trouver les bons indices...
-        tile[][] = A[]
+        //TODO trouver les bons indices...
+        tile[][] = A[];
 
     }
 
     barrier(CLK_LOCAL_MEM_FENCE);
-
+    int tmp = y*4;
     for(int k=0; k<4; k++)
-        ...
+        B[(tmp + k)*line_size + x] = 0.75 * tile[x][k] +
+                                     0.25*( tile[x-1][k] +
+                                            tile[x+1][k] +
+                                            tile[x][k-1] +
+                                            tile[x][k+1]);
 
-    }
+}
+
+
