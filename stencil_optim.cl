@@ -26,7 +26,7 @@ stencil(__global float *B,
         const int cby = (yloc & 1) ? -1 : 16;
         const int bx = (yloc & 2) ? cbx : cby;
         const int by = (yloc & 2) ? cby : cbx;
-
+	//TODO trouver les bons indices...
         tile[][] = A[]
 
     }
