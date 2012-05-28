@@ -119,7 +119,7 @@ void* calcul_cpu(void* p)
     return NULL;
 }
 
-
+int ydim_gpu = 512;
 
 int main(int argc, char** argv)
 {
@@ -128,6 +128,7 @@ int main(int argc, char** argv)
 
     if(argc > 0){
             numIterations = atoi(argv[1]);
+	ydim_gpu = atoi(argv[2]);
     }
 
 
@@ -345,7 +346,8 @@ int main(int argc, char** argv)
             pthread_t thread;
 
             //TODO changer
-            printf("nombre d'itération: %d\n",numIterations);
+            printf("nombre d'itérations: %d\n",numIterations);
+	    printf("taille GPU : %d\n",ydim_gpu);
 
             gettimeofday(&tv1, NULL);
 
