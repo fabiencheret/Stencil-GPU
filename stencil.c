@@ -27,6 +27,24 @@
     exit(EXIT_FAILURE);				\
     }							\
     } while(0)
+//
+//float optimizer;
+//struct timeval tcpu,tgpu;
+//unsigned int ydim_gpu = YDIM_GPU;
+//
+//void equilibrer_charges()
+//{
+//    float diff = ((float)TIME_DIFF(tcpu,tgpu)) / 1000;
+//    /* si diff > 0 alors tgpu > tcpu */
+//    if(ydim_gpu > 16 && ydim_gpu < (YDIM - 16))
+//    {
+//        if(diff > 0)
+//            ydim_gpu -= 16;
+//        else
+//            ydim_gpu += 16;
+//    }
+//}
+
 
 size_t file_size(const char *filename)
 {
@@ -73,12 +91,12 @@ load(const char *filename)
 /* Version CPU multicoeur */
 void stencil_multi(float* B, const float* A, int ydim)
 {
-#pragma omp parallel for
+#pragma omp parallel for collapse(2)
     for(int y=0; y<ydim; y++)
         for(int x=0; x<XDIM; x++)
             B[y*LINESIZE + x] = 0.75*A[y*LINESIZE + x] +
-                    0.25*( A[y*LINESIZE + x - 1] + A[y*LINESIZE + x + 1] +
-                          A[(y-1)*LINESIZE + x] + A[(y+1)*LINESIZE + x]);
+                                0.25*( A[y*LINESIZE + x - 1] + A[y*LINESIZE + x + 1] +
+                                       A[(y-1)*LINESIZE + x] + A[(y+1)*LINESIZE + x]);
 }
 
 /* Version CPU pour comparaison */
@@ -87,8 +105,8 @@ void stencil(float* B, const float* A, int ydim)
     for(int y=0; y<ydim; y++)
         for(int x=0; x<XDIM; x++)
             B[y*LINESIZE + x] = 0.75*A[y*LINESIZE + x] +
-                    0.25*( A[y*LINESIZE + x - 1] + A[y*LINESIZE + x + 1] +
-                          A[(y-1)*LINESIZE + x] + A[(y+1)*LINESIZE + x]);
+                                0.25*( A[y*LINESIZE + x - 1] + A[y*LINESIZE + x + 1] +
+                                       A[(y-1)*LINESIZE + x] + A[(y+1)*LINESIZE + x]);
 }
 
 
@@ -97,6 +115,7 @@ void* calcul_cpu(void* p)
 {
     struct double_matrice* container = (struct double_matrice*) p;
     stencil_multi(container->out, container->in, container->ydim_cpu);
+    //gettimeofday(&tcpu,NULL);
     return NULL;
 }
 
@@ -315,7 +334,7 @@ int main(int argc, char** argv)
             local[1] = 4;
 
 //	    float * tmp;
-	    pthread_t thread;
+            pthread_t thread;
 
             //TODO changer
             printf("nombre d'itération: %d\n",numIterations);
@@ -343,13 +362,16 @@ int main(int argc, char** argv)
 
                 // CPU part
                 pthread_create(&thread, NULL, calcul_cpu, (void*) &container);
-                pthread_join(thread ,NULL);
+
 
                 //stencil(container.out, container.in, container.ydim_cpu);
 
                 // Wait for the command commands to get serviced before reading back results
                 //
                 clFinish(queue);
+                gettimeofday(&tgpu,NULL);
+
+                pthread_join(thread ,NULL);
 
                 //rapatriement gpu -> cpu
                 err = clEnqueueReadBuffer(queue, d_odata, CL_TRUE,
@@ -371,6 +393,8 @@ int main(int argc, char** argv)
                 tmp_switch = container.out;
                 container.out = container.in;
                 container.in = tmp_switch;
+
+                equilibrer_charges();
 
             }
             gettimeofday(&tv2, NULL);
