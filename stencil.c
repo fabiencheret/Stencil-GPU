@@ -32,18 +32,15 @@
 //struct timeval tcpu,tgpu;
 //unsigned int ydim_gpu = YDIM_GPU;
 //
-//void equilibrer_charges()
-//{
-//    float diff = ((float)TIME_DIFF(tcpu,tgpu)) / 1000;
-//    /* si diff > 0 alors tgpu > tcpu */
-//    if(ydim_gpu > 16 && ydim_gpu < (YDIM - 16))
-//    {
-//        if(diff > 0)
-//            ydim_gpu -= 16;
-//        else
-//            ydim_gpu += 16;
-//    }
-//}
+void equilibrer_charges()
+{
+    float diff = ((float)TIME_DIFF(temps1,temps2)) / 1000;
+    /* si diff > 0 alors temps2 > temps1 */
+    if(diff > 0)
+        printf("GPU plus long\n");
+    else
+        printf("CPU plus long\n");
+}
 
 
 size_t file_size(const char *filename)
@@ -109,13 +106,15 @@ void stencil(float* B, const float* A, int ydim)
                                        A[(y-1)*LINESIZE + x] + A[(y+1)*LINESIZE + x]);
 }
 
+struct timeval temps1, temps2;
+
 
 /* fonction appelée par le thread dès sa création */
 void* calcul_cpu(void* p)
 {
     struct double_matrice* container = (struct double_matrice*) p;
     stencil_multi(container->out, container->in, container->ydim_cpu);
-    //gettimeofday(&tcpu,NULL);
+    gettimeofday(&temps1,NULL);
     return NULL;
 }
 
@@ -379,7 +378,7 @@ int main(int argc, char** argv)
                 // Wait for the command commands to get serviced before reading back results
                 //
                 clFinish(queue);
-                //gettimeofday(&tgpu,NULL);
+                gettimeofday(&temps2,NULL);
 
                 pthread_join(thread ,NULL);
 
@@ -404,7 +403,7 @@ int main(int argc, char** argv)
                 container.out = container.in;
                 container.in = tmp_switch;
 
-                //equilibrer_charges();
+                equilibrer_charges();
 
             }
             gettimeofday(&tv2, NULL);
