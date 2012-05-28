@@ -22,6 +22,6 @@ struct double_matrice {
 };
 
 
-#define NB_ITER 1
+#define NB_ITER 500
 
 #endif

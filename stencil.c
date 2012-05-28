@@ -91,7 +91,7 @@ load(const char *filename)
 /* Version CPU multicoeur */
 void stencil_multi(float* B, const float* A, int ydim)
 {
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for schedule(guided)
     for(int y=0; y<ydim; y++)
         for(int x=0; x<XDIM; x++)
             B[y*LINESIZE + x] = 0.75*A[y*LINESIZE + x] +
@@ -247,7 +247,7 @@ int main(int argc, char** argv)
     /* Version cpu pour comparaison */
 
     void * tmp_switch;
-    int numIterations = 300;
+    int numIterations = NB_ITER;
 
     float* reference = (float*) malloc(mem_size);
     float* reference_i = (float*) malloc(mem_size);
@@ -369,7 +369,7 @@ int main(int argc, char** argv)
                 // Wait for the command commands to get serviced before reading back results
                 //
                 clFinish(queue);
-                gettimeofday(&tgpu,NULL);
+                //gettimeofday(&tgpu,NULL);
 
                 pthread_join(thread ,NULL);
 
@@ -394,7 +394,7 @@ int main(int argc, char** argv)
                 container.out = container.in;
                 container.in = tmp_switch;
 
-                equilibrer_charges();
+                //equilibrer_charges();
 
             }
             gettimeofday(&tv2, NULL);
