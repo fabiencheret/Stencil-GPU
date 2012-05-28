@@ -17,7 +17,7 @@ stencil(__global float *B,
     // Begin with inner values
     for(int k=0; k<4; k++)
     {
-        tile[yloc*4+k+1][xloc+1] = A[(y*4+k)*line_size + x];
+        tile[xloc+1][yloc+k+1] = A[(y*4+k)*line_size + x];
     }
     // and finish with the borders
 
@@ -27,8 +27,8 @@ stencil(__global float *B,
         const int bx = (yloc & 2) ? cbx : cby;
         const int by = (yloc & 2) ? cby : cbx;
         //TODO trouver les bons indices...
-        tile[cbx][cby] = A[(y*4+cbx)*line_size + cbx];
-        tile[bx][by] = A[(y*4+bx)*line_size + bx];
+        tile[cbx][cby] = A[(y*4+cby)*line_size + cbx];
+        tile[bx][by] = A[(y*4+by)*line_size + bx];
     }
 
     barrier(CLK_LOCAL_MEM_FENCE);
