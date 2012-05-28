@@ -9,11 +9,12 @@ stencil(__global float *B,
 
    A += line_size + 16; // OFFSET
    B += line_size + 16; // OFFSET
+   int tmp = y*4;
 
    for(int k=0; k<4; k++)
-     B[(y*4 + k)*line_size + x] = 0.75 * A[(y*4 + k)*line_size + x ] +
-                                  0.25*( A[(y*4 + k)*line_size + x - 1 ] +
-				         A[(y*4 + k)*line_size + x + 1] +
-                                         A[(y*4 + k - 1)*line_size + x ] +
-					 A[(y*4 + k + 1)*line_size + x ] );
+     B[(tmp + k)*line_size + x] = 0.75 * A[(tmp + k)*line_size + x ] +
+                                  0.25*( A[(tmp + k)*line_size + x - 1 ] +
+				         A[(tmp + k)*line_size + x + 1] +
+                                         A[(tmp + k - 1)*line_size + x ] +
+					 A[(tmp + k + 1)*line_size + x ] );
 }

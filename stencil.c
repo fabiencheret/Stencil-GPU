@@ -73,7 +73,7 @@ load(const char *filename)
 /* Version CPU multicoeur */
 void stencil_multi(float* B, const float* A, int ydim)
 {
-    #pragma omp parallel for
+#pragma omp parallel for
     for(int y=0; y<ydim; y++)
         for(int x=0; x<XDIM; x++)
             B[y*LINESIZE + x] = 0.75*A[y*LINESIZE + x] +
