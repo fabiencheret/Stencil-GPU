@@ -1,0 +1,131 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[francais]{babel}
+
+\author{Fabien Chéret\\Cyrille Piacibello\\Benjamin Lux}
+\date{\today}
+\title{Calcul de code Stencil 5 points sur une architecture hétérogène.}
+\usepackage{graphicx}
+\begin{document}
+\maketitle
+
+\section*{Introduction}
+Le but de ce projet est d’élaborer un programme implémentant un code stencil 5 points utilisant à la fois la carte graphique et tous les processeurs disponibles.
+
+La difficulté se trouve dans la non-homogénéité des ressources mises en jeu, les processeurs ayant un fonctionnement différent de celui des cartes graphiques.
+
+De plus, la mémoire utilisée par ces deux unités de calcul n'est pas la même, il sera donc nécessaire de transférer des données entre les mémoires.
+
+\section{Division de la matrice et traitement en simultané}
+Pour des raisons de performance, les données envoyées à la carte graphique doivent réunir certaines propriétés :
+\begin{itemize}
+\item l'adresse en mémoire doit être alignée sur 16 bits
+\item l'adresse de début de la matrice doit être alignée sur 16 bits
+\item la taille de la matrice à traiter doit être un multiple de 16
+\end{itemize}
+Ces propriétés sont difficiles à obtenir car notre matrice a des bords.
+Il faut donc prévoir de l'espace mémoire supplémentaire qui ne sera pas utilisé.
+Finalement, la figure \ref{matmem} indique la représentation en mémoire de notre matrice.
+\begin{figure}[!htf]
+\includegraphics[scale=0.30]{Dessin sans titre.png}
+\caption{Représentation de la matrice en mémoire}
+\label{matmem}
+\end{figure}
+
+Il y a beaucoup d'espace inutilisé, mais les performances seront grandement améliorées.
+
+La première étape lors de l'utilisation d'un système hétérogène a été de séparer la matrice en deux parties afin de pouvoir la traiter simultanément par les CPU et le GPU.
+
+Nous avons choisi de traiter la partie haute de la matrice avec le GPU, tandis que la partie basse sera reléguée au CPU. Cet agencement sera efficace car la matrice et le kernel sont spécialement écrits pour une matrice de cette forme.
+
+Afin de lancer a la fois le traitement sur les deux unités de calcul, nous créons un thread qui s'occupera de lancer le calcul du CPU, tandis que le thread principal lance le traitement GPU.
+De cette manière, les deux traitements s'effectuent bien en simultané.
+
+\section{Plusieurs itérations : transferts de données}
+
+Le but final de ce programme est d'effectuer de nombreuses itérations sur la matrice d'entrée.
+
+Au niveau de l'implémentation, cela pose plusieurs problèmes :
+\begin{itemize}
+\item les matrices d'entrée et de sortie doivent être interverties
+\item il faut récupérer les données calculées par le GPU pour que le CPU calcule les bons éléments
+\item il faut récupérer les données calculées par le CPU pour que le GPU calcule les bons éléments
+\end{itemize}
+
+Pour intervertir les matrices pour le calcul CPU, il n'y a aucun problème, il ne s'agit que d'un échange de pointeur.
+Pour intervertir les matrices données au GPU, nous avons du intégrer dans la boucle les appels à \verb+clSetKernelArg+ qui nous a permis d'intervertir les matrices sans avoir à les transférer de nouveau, ce qui permettra une plus grande vitesse de traitement.
+
+
+\section{Parallélisation de la partie CPU}
+
+Pour paralléliser la partie CPU, nous avons choisi d'utiliser \textit{OpenMP}.
+La boucle de calcul se présente ainsi :
+\begin{verbatim}
+void stencil_multi(float* B, const float* A, int ydim)
+{
+for(int y=0; y<ydim; y++)
+   for(int x=0; x<XDIM; x++)
+     B[y*LINESIZE + x] = 0.75*A[y*LINESIZE + x] +
+                         0.25*( A[y*LINESIZE + x - 1] + A[y*LINESIZE + x + 1] +
+                                A[(y-1)*LINESIZE + x] + A[(y+1)*LINESIZE + x]);
+}
+\end{verbatim}
+
+Il s'agit d'une double boucle for.
+Nous pouvons donc paralléliser cette boucle rapidement en ajoutant une directive \textit{OpenMP} :
+\begin{verbatim}
+void stencil_multi(float* B, const float* A, int ydim)
+{
+#pragma omp parallel for
+for(int y=0; y<ydim; y++)
+   for(int x=0; x<XDIM; x++)
+     B[y*LINESIZE + x] = 0.75*A[y*LINESIZE + x] +
+                         0.25*( A[y*LINESIZE + x - 1] + A[y*LINESIZE + x + 1] +
+                                A[(y-1)*LINESIZE + x] + A[(y+1)*LINESIZE + x]);
+}
+\end{verbatim}
+Cependant dans ce cas, une seule boucle sera parallélisée, la première.
+Cette directive va donc créer autant de threads que de c\oe{}urs, qui vont chacun effectuer une partie du travail total.
+
+La solution consistant à créer N threads pour chaque coeurs n'est pas efficace, le traitement global est ralenti à cause des changements de contexte.
+
+La solution finale que nous avons implémenté est donc :
+\begin{verbatim}
+void stencil_multi(float* B, const float* A, int ydim)
+{
+#pragma omp parallel for schedule(guided)
+for(int y=0; y<ydim; y++)
+   for(int x=0; x<XDIM; x++)
+     B[y*LINESIZE + x] = 0.75*A[y*LINESIZE + x] +
+                         0.25*( A[y*LINESIZE + x - 1] + A[y*LINESIZE + x + 1] +
+                                A[(y-1)*LINESIZE + x] + A[(y+1)*LINESIZE + x]);
+}
+\end{verbatim}
+
+L'argument \verb+schedule(guided)+ est, tests à l'appui, le plus efficace.
+Grâce à un test de plus, nous observons une accélération d'environ 4 par rapport à la version non multi-threadée.
+
+\section{Solution finale et résultats}
+
+A des fins de tests, nous augmentons la taille du problème jusqu'à une matrice de $8192\times4096$ et nous considérons 200 itérations.
+Ainsi nous espérons avoir des résultats fiables et reproductibles.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
