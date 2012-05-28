@@ -34,11 +34,11 @@ stencil(__global float *B,
     barrier(CLK_LOCAL_MEM_FENCE);
     int tmp = y*4;
     for(int k=0; k<4; k++)
-        B[(tmp + k)*line_size + x] = 0.75 * tile[x+1][k+1] +
-                                     0.25*( tile[x-1+1][k+1] +
-                                            tile[x+1+1][k+1] +
-                                            tile[x+1][k-1+1] +
-                                            tile[x+1][k+1+1]);
+        B[(tmp + k)*line_size + x] = 0.75 * tile[xloc+1][k+1] +
+                                     0.25*( tile[xloc-1+1][k+1] +
+                                            tile[xloc+1+1][k+1] +
+                                            tile[xloc+1][k-1+1] +
+                                            tile[xloc+1][k+1+1]);
 
 }
 
