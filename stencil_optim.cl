@@ -8,7 +8,7 @@ stencil(__global float *B,
     const unsigned int xloc = get_local_id(0);
     const unsigned int yloc = get_local_id(1);
 
-    __local float tile[16+2][4+2];
+    __local float tile[16+2][16+2];
 
     A += line_size + 16; // OFFSET
     B += line_size + 16; // OFFSET
@@ -17,7 +17,7 @@ stencil(__global float *B,
     // Begin with inner values
     for(int k=0; k<4; k++)
     {
-        tile[xloc+1][yloc+k+1] = A[(y*4+k)*line_size + x];
+        tile[xloc+1][yloc*4+k+1] = A[(y*4+k)*line_size + x];
     }
     // and finish with the borders
 
@@ -27,18 +27,18 @@ stencil(__global float *B,
         const int bx = (yloc & 2) ? cbx : cby;
         const int by = (yloc & 2) ? cby : cbx;
         //TODO trouver les bons indices...
-        tile[cbx][cby] = A[(y*4+cby)*line_size + x];
-        tile[bx][by] = A[(y*4+by)*line_size + x];
+        tile[cbx][yloc*4+cby] = A[(y*4+cby)*line_size + x];
+        tile[bx][yloc*4+by] = A[(y*4+by)*line_size + x];
     }
 
     barrier(CLK_LOCAL_MEM_FENCE);
     int tmp = y*4;
     for(int k=0; k<4; k++)
-        B[(tmp + k)*line_size + x] = 0.75 * tile[xloc+1][k+1] +
-                                     0.25*( tile[xloc-1+1][k+1] +
-                                            tile[xloc+1+1][k+1] +
-                                            tile[xloc+1][k-1+1] +
-                                            tile[xloc+1][k+1+1]);
+        B[(tmp + k)*line_size + x] = 0.75 * tile[xloc+1][yloc*4+k+1] +
+                                     0.25*( tile[xloc-1+1][yloc*4+k+1] +
+                                            tile[xloc+1+1][yloc*4+k+1] +
+                                            tile[xloc+1][yloc*4+k-1+1] +
+                                            tile[xloc+1][yloc*4+k+1+1]);
 
 }
 
