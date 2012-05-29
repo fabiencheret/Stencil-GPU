@@ -117,6 +117,7 @@ Cependant, la \og tuile \fg à copier est d'une forme assez particulière, décr
 
 Lors de l'implémentation, nous nous sommes heurtés à de nombreux problèmes. En effet, le nombre de threads nécessaire est difficile à régler, et les indices deviennent vite compliqués à calculer.
 Par manque de temps, nous n'avons pas pu implémenter complètement cette version optimisée, mais vous trouverez le code temporaire dans les annexes de ce rapport.
+De plus l'abscence de débogueur pour le code OpenCL n'a pas facilité l'implémentation ; un outil du type \textit{gdb} aurait été fort apréciable, et il ne fait aucun doute qu'avec cet outil, nous serions arrivé à une solution plus facilement.
 
 \section{Solution finale et résultats}
 
@@ -131,14 +132,53 @@ Ainsi nous espérons avoir des résultats fiables et reproductibles.
 
 
 
+\section*{Annexe}
+
+\begin{verbatim}
+__kernel void
+stencil(__global float *B,
+        __global float *A,
+        unsigned int line_size)
+{
+
+    __local float tile[18][18];
+
+    const unsigned int x = get_global_id(0);
+    const unsigned int y = get_global_id(1);
+
+    const unsigned int xloc = get_local_id(0);
+    const unsigned int yloc = get_local_id(1);
+
+    A += line_size + 16;
+    B += line_size + 16;
+
+    for(int i=0; i<4; i++)
+    {
+        tile[xloc+1][yloc*4+i+1] = A[(y*4+i)*line_size + x];
+    }
+
+    const int cbx = xloc;
+    const int cby = (yloc & 1) ? -1 : 16;
+    const int bx = (yloc & 2) ? cbx : cby;
+    const int by = (yloc & 2) ? cby : cbx;
 
 
+    tile[cbx][cby+1] = A[(y*4-yloc+cby)*line_size + x];
+    for(int i=0; i<4; i++)
+    {
+        tile[bx+1][by+1+i] = A[(y*4+i-yloc+by)*line_size + x - xloc + bx];
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    for(int k=0; k<4; k++)
+        B[(k + y*4)*line_size + x] = 0.75 * tile[xloc+1][yloc*4+k+1] +
+                                       0.25*( tile[xloc][yloc*4+k+1] +
+                                              tile[xloc+2][yloc*4+k+1] +
+                                              tile[xloc+1][yloc*4+k] +
+                                              tile[xloc+1][yloc*4+k+2]);
 
 
-
-
-
-
-
+}
+\end{verbatim}
 
 \end{document}
