@@ -35,11 +35,10 @@ stencil(__global float *B,
     int tmp = y*4;
     for(int k=0; k<4; k++)
         B[(tmp + k)*line_size + x] = 0.75 * tile[xloc+1][yloc*4+k+1] +
-                                     0.25*( tile[xloc-1+1][yloc*4+k+1] +
-                                            tile[xloc+1+1][yloc*4+k+1] +
-                                            tile[xloc+1][yloc*4+k-1+1] +
-                                            tile[xloc+1][yloc*4+k+1+1]);
+                                     0.25*( tile[xloc][yloc*4+k+1] +
+                                            tile[xloc+2][yloc*4+k+1] +
+                                            tile[xloc+1][yloc*4+k] +
+                                            tile[xloc+1][yloc*4+k+2]);
 
 }
-
 
