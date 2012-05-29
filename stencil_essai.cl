@@ -33,21 +33,22 @@ stencil(__global float *B,
     const int bx = (yloc & 2) ? cbx : cby;
     const int by = (yloc & 2) ? cby : cbx;
 //on copie les bords...
-
     tile[cbx][cby+1] = A[((y-yloc+cby)*4)*line_size + x];
-    tile[bx+1][by+1] = A[((y-yloc+by)*4)*line_size + x - xloc + bx];
-
+    for(int i=0; i<4; i++)
+    {
+        tile[bx+1][by+1+i] = A[((y-yloc+by)*4+i)*line_size + x - xloc + bx];
+    }
 //on prie...
 
 //boucle
     barrier(CLK_LOCAL_MEM_FENCE);
-    int tmp = y*4;
+
     for(int k=0; k<4; k++)
-        B[(tmp + k)*line_size + x] = 0.75 * tile[xloc+1][yloc*4+k+1] +
-                                     0.25*( tile[xloc][yloc*4+k+1] +
-                                            tile[xloc+2][yloc*4+k+1] +
-                                            tile[xloc+1][yloc*4+k] +
-                                            tile[xloc+1][yloc*4+k+2]);
+        B[(tmp + y*4)*line_size + x] = 0.75 * tile[xloc+1][yloc*4+k+1] +
+                                       0.25*( tile[xloc][yloc*4+k+1] +
+                                              tile[xloc+2][yloc*4+k+1] +
+                                              tile[xloc+1][yloc*4+k] +
+                                              tile[xloc+1][yloc*4+k+2]);
 
 
 }
