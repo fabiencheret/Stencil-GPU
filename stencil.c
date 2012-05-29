@@ -227,7 +227,7 @@ int main(int argc, char** argv)
 
     // Load program source
     const char	*opencl_prog;
-    opencl_prog = load("stencil_optim.cl");
+    opencl_prog = load("stencil_essai.cl");
 
     // Build program
     //
