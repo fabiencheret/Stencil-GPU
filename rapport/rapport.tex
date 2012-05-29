@@ -27,7 +27,7 @@ Ces propriétés sont difficiles à obtenir car notre matrice a des bords.
 Il faut donc prévoir de l'espace mémoire supplémentaire qui ne sera pas utilisé.
 Finalement, la figure \ref{matmem} indique la représentation en mémoire de notre matrice.
 \begin{figure}[!htf]
-\includegraphics[scale=0.30]{Dessin sans titre.png}
+\includegraphics[scale=0.30]{matrice.png}
 \caption{Représentation de la matrice en mémoire}
 \label{matmem}
 \end{figure}
@@ -104,6 +104,19 @@ for(int y=0; y<ydim; y++)
 
 L'argument \verb+schedule(guided)+ est, tests à l'appui, le plus efficace.
 Grâce à un test de plus, nous observons une accélération d'environ 4 par rapport à la version non multi-threadée.
+\section{Optimisation de la partie GPU}
+Le \textit{kernel} utilisé jusqu'alors est \og naïf \fg. En effet, il ne s'appuie que sur la mémoire globale de la carte graphique, qui est bien plus lente que la mémoire locale, partagée dans un multiprocesseur. 
+Une solution d'obtimisation serait donc de créer une \og tuile \fg de mémoire locale, en copiant au début du \textit{kernel} la mémoire utile au calcul. 
+On espère ainsi augmenter la vitesse du calcul, et donc du traitement global.
+Cependant, la \og tuile \fg à copier est d'une forme assez particulière, décrite en figure \ref{tuile}.
+\begin{figure}[htp]
+\includegraphics[scale=0.30]{/home/fabien/Projet/stencil/rapport/tuile.png}
+\caption{Forme de la tuile à remplir}
+\label{tuile}
+\end{figure}
+
+Lors de l'implémentation, nous nous sommes heurtés à de nombreux problèmes. En effet, le nombre de threads nécessaire est difficile à régler, et les indices deviennent vite compliqués à calculer.
+Par manque de temps, nous n'avons pas pu implémenter complètement cette version optimisée, mais vous trouverez le code temporaire dans les annexes de ce rapport.
 
 \section{Solution finale et résultats}
 
