@@ -27,7 +27,7 @@ Ces propriétés sont difficiles à obtenir car notre matrice a des bords.
 Il faut donc prévoir de l'espace mémoire supplémentaire qui ne sera pas utilisé.
 Finalement, la figure \ref{matmem} indique la représentation en mémoire de notre matrice.
 \begin{figure}[!htf]
-\includegraphics[scale=0.30]{Dessin sans titre.png}
+\includegraphics[scale=0.30]{matrice.png}
 \caption{Représentation de la matrice en mémoire}
 \label{matmem}
 \end{figure}
@@ -104,28 +104,109 @@ for(int y=0; y<ydim; y++)
 
 L'argument \verb+schedule(guided)+ est, tests à l'appui, le plus efficace.
 Grâce à un test de plus, nous observons une accélération d'environ 4 par rapport à la version non multi-threadée.
+\section{Optimisation de la partie GPU}
+Le \textit{kernel} utilisé jusqu'alors est \og naïf \fg. En effet, il ne s'appuie que sur la mémoire globale de la carte graphique, qui est bien plus lente que la mémoire locale, partagée dans un multiprocesseur. 
+Une solution d'obtimisation serait donc de créer une \og tuile \fg de mémoire locale, en copiant au début du \textit{kernel} la mémoire utile au calcul. 
+On espère ainsi augmenter la vitesse du calcul, et donc du traitement global.
+Cependant, la \og tuile \fg à copier est d'une forme assez particulière, décrite en figure \ref{tuile}.
+\begin{figure}[htp]
+\includegraphics[scale=0.30]{/home/fabien/Projet/stencil/rapport/tuile.png}
+\caption{Forme de la tuile à remplir}
+\label{tuile}
+\end{figure}
+
+Lors de l'implémentation, nous nous sommes heurtés à de nombreux problèmes. En effet, le nombre de threads nécessaire est difficile à régler, et les indices deviennent vite compliqués à calculer.
+Par manque de temps, nous n'avons pas pu implémenter complètement cette version optimisée, mais vous trouverez le code temporaire dans les annexes de ce rapport en \ref{kernel}.
+De plus l'abscence de débogueur pour le code OpenCL n'a pas facilité l'implémentation ; un outil du type \textit{gdb} aurait été fort apréciable, et il ne fait aucun doute qu'avec cet outil, nous serions arrivé à une solution plus facilement.
 
 \section{Solution finale et résultats}
+\subsection{Performance}
+A des fins de tests, nous augmentons la taille du problème jusqu'à une matrice de $8192\times4096$.
 
-A des fins de tests, nous augmentons la taille du problème jusqu'à une matrice de $8192\times4096$ et nous considérons 200 itérations.
-Ainsi nous espérons avoir des résultats fiables et reproductibles.
+Afin de tester finement l'accélération du programme, nous créons un script shell simple (voir annexe \ref{script}) qui lance le programme en modifiant les paramètres de façon à ce que la taille de la matrice gérée par le CPU augmente de 64 lignes à chaque itération.
+
+\begin{figure}[htp]
+\includegraphics[scale=0.30]{/home/fabien/Projet/stencil/rapport/acceleration.png}
+\caption{Accélération en fonction de la taille et du nombre d'itérations}
+\label{acceleration}
+\end{figure}
+
+Ces données sont utiles, car elles permettent de voir quelle est la meilleure taille à utiliser pour que le calcul soit le plus efficace possible.
+
+Ici, nous pouvons donc déduire que la meilleure taille à utiliser se situe vers $2240$ lignes pour le GPU.
+
+Nous pouvons aussi voir que notre travail a porté ses fruits, puisqu'on obtient une accélération supérieure à celle observée par la version CPU multi-threadée.
+
+\subsection{Conclusion}
+Pour conclure, nous pouvons dire que notre programme est un succès, car il présente une accélération non négligeable d'environ 6. 
+Cependant, ce résultat est limité par la présence de code séquentiel (inversion des matrices, calcul du temps passé en traitement), mais aussi par la lenteur des écritures mémoire. En effet, le transfert des lignes, même s'il est réduit au maximum, est toujours très long.
+
+Pour améliorer tout de même ces résultats, si nous avions plus de temps, nous aurions fini d'implémenter le kernel optimisé utilisant la mémoire locale de la carte graphique, ce qui aurait, on l'espère, eu une conséquence notable sur l'accélération.
+
+\clearpage
+\section*{Annexe}
+\subsection{Kernel optimisé non finalisé}
+\label{kernel}
+\begin{verbatim}
+__kernel void
+stencil(__global float *B,
+        __global float *A,
+        unsigned int line_size)
+{
+
+    __local float tile[18][18];
+
+    const unsigned int x = get_global_id(0);
+    const unsigned int y = get_global_id(1);
+
+    const unsigned int xloc = get_local_id(0);
+    const unsigned int yloc = get_local_id(1);
+
+    A += line_size + 16;
+    B += line_size + 16;
+
+    for(int i=0; i<4; i++)
+    {
+        tile[xloc+1][yloc*4+i+1] = A[(y*4+i)*line_size + x];
+    }
+
+    const int cbx = xloc;
+    const int cby = (yloc & 1) ? -1 : 16;
+    const int bx = (yloc & 2) ? cbx : cby;
+    const int by = (yloc & 2) ? cby : cbx;
 
 
+    tile[cbx][cby+1] = A[(y*4-yloc+cby)*line_size + x];
+    for(int i=0; i<4; i++)
+    {
+        tile[bx+1][by+1+i] = A[(y*4+i-yloc+by)*line_size + x - xloc + bx];
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    for(int k=0; k<4; k++)
+        B[(k + y*4)*line_size + x] = 0.75 * tile[xloc+1][yloc*4+k+1] +
+                                       0.25*( tile[xloc][yloc*4+k+1] +
+                                              tile[xloc+2][yloc*4+k+1] +
+                                              tile[xloc+1][yloc*4+k] +
+                                              tile[xloc+1][yloc*4+k+2]);
 
 
+}
+\end{verbatim}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\subsection{script utilisé lors des tests}
+\label{script}
+\begin{verbatim}
+#!/bin/bash
+taille=4096
+i=0
+str=""
+while((i<taille))
+do
+str=$i"\t"
+str=$str$(./stencil 200 $i)
+echo -e $str >> sortie.txt
+((i+=64))
+done
+\end{verbatim}
 \end{document}
