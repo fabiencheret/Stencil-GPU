@@ -206,12 +206,12 @@ int main(int argc, char** argv)
         err = clGetPlatformInfo(pf[_p], CL_PLATFORM_VENDOR, 1024, vendor, NULL);
         check(err, "Failed to get Platform Info");
 
-        printf("Platform %d: %s - %s\n", _p, name, vendor);
+	printf("Platform %d: %s - %s\n", _p, name, vendor);
 
         if(strstr(vendor, "NVIDIA"))
         {
             p = _p;
-            printf("Choosing platform %d\n", p);
+	    printf("Choosing platform %d\n", p);
         }
     }
 
@@ -260,7 +260,6 @@ int main(int argc, char** argv)
 
     void * tmp_switch;
 
-
     float* reference = (float*) malloc(mem_size);
     float* reference_i = (float*) malloc(mem_size);
     for(unsigned int i = 0; i < TOTALSIZE; i++)
@@ -289,7 +288,6 @@ int main(int argc, char** argv)
     gettimeofday(&tcpu2,NULL);
 
     float timecpu=((float)TIME_DIFF(tcpu1,tcpu2)) / 1000;
-
 
 
 
@@ -345,10 +343,10 @@ int main(int argc, char** argv)
             local[0] = 16; // Set workgroup size
             local[1] = 4;
 
-//	    float * tmp;
+	    float * tmp;
             pthread_t thread;
 
-            //TODO changer
+            
             printf("nombre d'itérations: %d\n",numIterations);
 	    printf("taille GPU : %d\n",ydim_gpu);
 
@@ -430,9 +428,11 @@ int main(int argc, char** argv)
             check(err, "Failed to read output matrix! %d\n", err);
 
 
-            printf("%f\t%f ms (%fGo/s)\t%f ms (%fGo/s)\n", timecpu/time1,
+	    printf("%f\t%f ms (%fGo/s)\t%f ms (%fGo/s)\n", timecpu/time1,
                    time1, numIterations * 3*mem_size / time1 / 1000000,
                    timecpu, numIterations * 3*mem_size / timecpu / 1000000);
+	    /*  printf("%f\n",timecpu/time1);*/
+	    
 
             // Validate our results
             //
@@ -448,11 +448,12 @@ int main(int argc, char** argv)
                     errors++;
                 }
             }
+	    
             if(errors)
-                fprintf(stderr,"%d erreurs !\n", errors);
+	      fprintf(stderr,"%d erreurs !\n", errors);
             else
-                fprintf(stderr,"pas d'erreurs, cool !\n");
-
+	      fprintf(stderr,"pas d'erreurs, cool !\n");
+	    
             clReleaseKernel(kernel);
             free(reference_i);
             free(reference);
