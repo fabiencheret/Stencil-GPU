@@ -33,11 +33,13 @@ stencil(__global float *B,
     const int bx = (yloc & 2) ? cbx : cby;
     const int by = (yloc & 2) ? cby : cbx;
 //on copie les bords...
-    tile[cbx][cby+1] = A[((y-yloc+cby)*4)*line_size + x];
+    //tile[cbx][cby+1] = A[((y-yloc+cby)*4)*line_size + x];
+    tile[cbx][cby+1] = A[(y*4-yloc+cby)*line_size + x]; // ??
 
     for(int i=0; i<4; i++)
     {
-        tile[bx+1][by+1+i] = A[((y-yloc+by)*4+i)*line_size + x - xloc + bx]; //A[(y*4+i-yloc+by)*line_size + x - xloc + bx] ?
+        //tile[bx+1][by+1+i] = A[((y-yloc+by)*4+i)*line_size + x - xloc + bx];
+        tile[bx+1][by+1+i] = A[(y*4+i-yloc+by)*line_size + x - xloc + bx]; //?
     }
 //on prie...
 
