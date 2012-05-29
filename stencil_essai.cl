@@ -37,7 +37,7 @@ stencil(__global float *B,
 
     for(int i=0; i<4; i++)
     {
-        tile[bx+1][by+1+i] = A[((y-yloc+by)*4+i)*line_size + x - xloc + bx];
+        tile[bx+1][by+1+i] = A[((y-yloc+by)*4+i)*line_size + x - xloc + bx]; //A[(y*4+i-yloc+by)*line_size + x - xloc + bx] ?
     }
 //on prie...
 
