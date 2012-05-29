@@ -116,24 +116,37 @@ Cependant, la \og tuile \fg à copier est d'une forme assez particulière, décr
 \end{figure}
 
 Lors de l'implémentation, nous nous sommes heurtés à de nombreux problèmes. En effet, le nombre de threads nécessaire est difficile à régler, et les indices deviennent vite compliqués à calculer.
-Par manque de temps, nous n'avons pas pu implémenter complètement cette version optimisée, mais vous trouverez le code temporaire dans les annexes de ce rapport.
+Par manque de temps, nous n'avons pas pu implémenter complètement cette version optimisée, mais vous trouverez le code temporaire dans les annexes de ce rapport en \ref{kernel}.
 De plus l'abscence de débogueur pour le code OpenCL n'a pas facilité l'implémentation ; un outil du type \textit{gdb} aurait été fort apréciable, et il ne fait aucun doute qu'avec cet outil, nous serions arrivé à une solution plus facilement.
 
 \section{Solution finale et résultats}
+\subsection{Performance}
+A des fins de tests, nous augmentons la taille du problème jusqu'à une matrice de $8192\times4096$.
 
-A des fins de tests, nous augmentons la taille du problème jusqu'à une matrice de $8192\times4096$ et nous considérons 200 itérations.
-Ainsi nous espérons avoir des résultats fiables et reproductibles.
+Afin de tester finement l'accélération du programme, nous créons un script shell simple (voir annexe \ref{script}) qui lance le programme en modifiant les paramètres de façon à ce que la taille de la matrice gérée par le CPU augmente de 64 lignes à chaque itération.
 
+\begin{figure}[htp]
+\includegraphics[scale=0.50]{/home/fabien/Projet/stencil/acceleration.png}
+\caption{Accélération en fonction de la taille et du nombre d'itérations}
+\label{acceleration}
+\end{figure}
 
+Ces données sont utiles, car elles permettent de voir quelle est la meilleure taille à utiliser pour que le calcul soit le plus efficace possible.
 
+Ici, nous pouvons donc déduire que la meilleure taille à utiliser se situe vers $2240$ lignes pour le GPU.
 
+Nous pouvons aussi voir que notre travail a porté ses fruits, puisqu'on obtient une accélération supérieure à celle observée par la version CPU multi-threadée.
 
+\subsection{Conclusion}
+Pour conclure, nous pouvons dire que notre programme est un succès, car il présente une accélération non négligeable d'environ 6. 
+Cependant, ce résultat est limité par la présence de code séquentiel (inversion des matrices, calcul du temps passé en traitement), mais aussi par la lenteur des écritures mémoire. En effet, le transfert des lignes, même s'il est réduit au maximum, est toujours très long.
 
+Pour améliorer tout de même ces résultats, si nous avions plus de temps, nous aurions fini d'implémenter le kernel optimisé utilisant la mémoire locale de la carte graphique, ce qui aurait, on l'espère, eu une conséquence notable sur l'accélération.
 
-
-
+\clearpage
 \section*{Annexe}
-
+\subsection{Kernel optimisé non finalisé}
+\label{kernel}
 \begin{verbatim}
 __kernel void
 stencil(__global float *B,
@@ -181,4 +194,19 @@ stencil(__global float *B,
 }
 \end{verbatim}
 
+\subsection{script utilisé lors des tests}
+\label{script}
+\begin{verbatim}
+#!/bin/bash
+taille=4096
+i=0
+str=""
+while((i<taille))
+do
+str=$i"\t"
+str=$str$(./stencil 200 $i)
+echo -e $str >> sortie.txt
+((i+=64))
+done
+\end{verbatim}
 \end{document}
